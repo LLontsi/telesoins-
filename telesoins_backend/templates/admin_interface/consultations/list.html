@@ -1,0 +1,177 @@
+{% extends 'admin_interface/base.html' %}
+{% load static %}
+
+{% block title %}Liste des Consultations | Administration{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/dashboard.css' %}">
+<style>
+  .consultation-list {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  .consultation-list th, .consultation-list td {
+    padding: 10px;
+    border: 1px solid #e1e1e1;
+    text-align: left;
+  }
+  .consultation-list th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+  .consultation-list tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  .status-pending { color: #f39c12; }
+  .status-confirmed { color: #2980b9; }
+  .status-canceled { color: #e74c3c; }
+  .status-completed { color: #27ae60; }
+  .type-video { color: #2980b9; }
+  .type-message { color: #8e44ad; }
+  .type-sms { color: #27ae60; }
+  .urgent { color: #e74c3c; font-weight: bold; }
+  .filter-form {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+  }
+  .filter-form select, .filter-form input {
+    padding: 5px;
+    margin-right: 10px;
+  }
+  .action-buttons a {
+    margin-right: 5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    color: white;
+    text-decoration: none;
+    font-size: 0.9em;
+  }
+  .view-btn { background-color: #3498db; }
+  .edit-btn { background-color: #f39c12; }
+  .delete-btn { background-color: #e74c3c; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Accueil</a> &rsaquo;
+  Consultations
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1>Liste des Consultations</h1>
+
+  <div class="filter-form">
+    <form method="get">
+      <label for="type">Type:</label>
+      <select name="type" id="type">
+        <option value="">Tous</option>
+        <option value="video" {% if request.GET.type == 'video' %}selected{% endif %}>Vidéo</option>
+        <option value="message" {% if request.GET.type == 'message' %}selected{% endif %}>Message</option>
+        <option value="sms" {% if request.GET.type == 'sms' %}selected{% endif %}>SMS</option>
+      </select>
+
+      <label for="medecin">Médecin:</label>
+      <select name="medecin" id="medecin">
+        <option value="">Tous</option>
+        {% for medecin in medecins %}
+          <option value="{{ medecin.id }}" {% if request.GET.medecin == medecin.id|stringformat:"s" %}selected{% endif %}>
+            {{ medecin.get_full_name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <label for="date_debut">Du:</label>
+      <input type="date" name="date_debut" id="date_debut" value="{{ request.GET.date_debut }}">
+
+      <label for="date_fin">Au:</label>
+      <input type="date" name="date_fin" id="date_fin" value="{{ request.GET.date_fin }}">
+
+      <button type="submit">Filtrer</button>
+      <a href="{% url 'admin_interface:consultation_list' %}">Réinitialiser</a>
+    </form>
+  </div>
+
+  {% if consultations %}
+    <table class="consultation-list">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Patient</th>
+          <th>Médecin</th>
+          <th>Durée</th>
+          <th>Rendez-vous</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for consultation in consultations %}
+          <tr>
+            <td>{{ consultation.start_time|date:"d/m/Y H:i" }}</td>
+            <td class="type-{{ consultation.type }}">{{ consultation.get_type_display }}</td>
+            <td>{{ consultation.patient.get_full_name }}</td>
+            <td>{{ consultation.medecin.get_full_name }}</td>
+            <td>
+              {% if consultation.end_time %}
+                {{ consultation.start_time|timesince:consultation.end_time }}
+              {% else %}
+                En cours
+              {% endif %}
+            </td>
+            <td>
+              {% if consultation.appointment %}
+                <span class="status-{{ consultation.appointment.status }}">
+                  {{ consultation.appointment.get_status_display }}
+                  {% if consultation.appointment.is_urgent %}
+                    <span class="urgent">(Urgent)</span>
+                  {% endif %}
+                </span>
+              {% else %}
+                Sans RDV
+              {% endif %}
+            </td>
+            <td class="action-buttons">
+              <a href="{% url 'admin_interface:consultation_detail' consultation.id %}" class="view-btn">Voir</a>
+              <a href="{% url 'admin_interface:consultation_edit' consultation.id %}" class="edit-btn">Modifier</a>
+              <a href="{% url 'admin_interface:consultation_delete' consultation.id %}" class="delete-btn" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette consultation?')">Supprimer</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if is_paginated %}
+      <div class="pagination">
+        <span class="step-links">
+          {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; Première</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Précédente</a>
+          {% endif %}
+
+          <span class="current">
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+          </span>
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Suivante</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Dernière &raquo;</a>
+          {% endif %}
+        </span>
+      </div>
+    {% endif %}
+  {% else %}
+    <p>Aucune consultation trouvée.</p>
+  {% endif %}
+
+  <div class="actions">
+    <a href="{% url 'admin_interface:consultation_list' %}" class="button">Ajouter une consultation</a>
+    <a href="{% url 'admin:index' %}" class="button">Retour à l'accueil</a>
+  </div>
+</div>
+{% endblock %}

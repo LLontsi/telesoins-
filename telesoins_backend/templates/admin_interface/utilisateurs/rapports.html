@@ -1,0 +1,204 @@
+{% extends 'admin_interface/base.html' %}
+
+{% block title %}Rapports - TéléSoins+ Administration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Rapports</h1>
+    <button class="btn btn-primary" onclick="window.print()">
+        <i class="fas fa-print me-2"></i> Imprimer
+    </button>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Configuration du rapport</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row">
+            <div class="col-md-5">
+                <label class="form-label">Type de rapport</label>
+                <select name="type" class="form-select" onchange="this.form.submit()">
+                    <option value="usage" {% if report_type == 'usage' %}selected{% endif %}>Utilisation</option>
+                    <option value="first_aid" {% if report_type == 'first_aid' %}selected{% endif %}>Premiers secours</option>
+                    <option value="performance" {% if report_type == 'performance' %}selected{% endif %}>Performance</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Période</label>
+                <select name="period" class="form-select" onchange="this.form.submit()">
+                    <option value="week" {% if period == 'week' %}selected{% endif %}>7 derniers jours</option>
+                    <option value="month" {% if period == 'month' %}selected{% endif %}>Mois en cours</option>
+                    <option value="quarter" {% if period == 'quarter' %}selected{% endif %}>Trimestre en cours</option>
+                    <option value="year" {% if period == 'year' %}selected{% endif %}>Année en cours</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            {% if report_type == 'usage' %}
+                Rapport d'utilisation
+            {% elif report_type == 'first_aid' %}
+                Rapport des modules de premiers secours
+            {% elif report_type == 'performance' %}
+                Rapport de performance
+            {% endif %}
+        </h5>
+        <span class="text-muted">{{ start_date|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y" }}</span>
+    </div>
+    <div class="card-body">
+        <div class="report-content">
+            {% if report_type == 'usage' %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Nouveaux utilisateurs</h5>
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Patients</p>
+                                        <h3 class="mb-0">{{ data.new_patients }}</h3>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Médecins</p>
+                                        <h3 class="mb-0">{{ data.new_medecins }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Activité</h5>
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Rendez-vous</p>
+                                        <h3 class="mb-0">{{ data.appointments }}</h3>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Consultations</p>
+                                        <h3 class="mb-0">{{ data.consultations }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Communication</h5>
+                                <p class="mb-1">Nombre total de messages échangés</p>
+                                <h3 class="mb-3">{{ data.messages }}</h3>
+                                
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;">
+                                        {{ data.messages }} messages
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% elif report_type == 'first_aid' %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Activité des modules</h5>
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Modules accédés</p>
+                                        <h3 class="mb-0">{{ data.modules_accessed }}</h3>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Quiz complétés</p>
+                                        <h3 class="mb-0">{{ data.quizzes_taken }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Performance</h5>
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Quiz réussis</p>
+                                        <h3 class="mb-0">{{ data.quizzes_passed }}</h3>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 text-muted">Score moyen</p>
+                                        <h3 class="mb-0">{{ data.avg_score|floatformat:1 }}%</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Taux de réussite</h5>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ data.avg_score|floatformat:1 }}%;">
+                                        {{ data.avg_score|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% elif report_type == 'performance' %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Charge de travail</h5>
+                                <p class="mb-1">Moyenne de consultations par médecin</p>
+                                <h3 class="mb-3">{{ data.avg_consultations_per_medecin|floatformat:1 }}</h3>
+                                
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;">
+                                        {{ data.avg_consultations_per_medecin|floatformat:1 }} consultations
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Communication</h5>
+                                <p class="mb-1">Moyenne de messages par consultation</p>
+                                <h3 class="mb-3">{{ data.avg_messages_per_consultation|floatformat:1 }}</h3>
+                                
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;">
+                                        {{ data.avg_messages_per_consultation|floatformat:1 }} messages
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends 'admin_interface/base.html' %}
+
+{% block title %}Tableau de bord - TéléSoins+ Administration{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Tableau de bord</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Patients</h5>
+                <p class="card-text display-4">{{ total_patients }}</p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'admin_interface:user_list' %}?role=patient" class="btn btn-sm btn-outline-primary">Voir tous</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Médecins</h5>
+                <p class="card-text display-4">{{ total_medecins }}</p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'admin_interface:user_list' %}?role=medecin" class="btn btn-sm btn-outline-primary">Voir tous</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Rendez-vous</h5>
+                <p class="card-text display-4">{{ total_appointments }}</p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'admin_interface:appointment_list' %}" class="btn btn-sm btn-outline-primary">Voir tous</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Consultations</h5>
+                <p class="card-text display-4">{{ total_consultations }}</p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'admin_interface:consultation_list' %}" class="btn btn-sm btn-outline-primary">Voir toutes</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Statistiques mensuelles</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="monthlyStatsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Rendez-vous d'aujourd'hui</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if today_appointments %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Heure</th>
+                                <th>Patient</th>
+                                <th>Médecin</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in today_appointments %}
+                            <tr onclick="window.location='{% url 'admin_interface:appointment_detail' appointment.id %}'">
+                                <td>{{ appointment.datetime|date:"H:i" }}</td>
+                                <td>{{ appointment.patient.get_full_name }}</td>
+                                <td>{{ appointment.medecin.get_full_name }}</td>
+                                <td>
+                                    <span class="badge badge-{{ appointment.status }}">
+                                        {{ appointment.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-0">Aucun rendez-vous prévu aujourd'hui</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent text-center">
+                <a href="{% url 'admin_interface:appointment_create' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i> Créer un rendez-vous
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Consultations récentes</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_consultations %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Médecin</th>
+                                <th>Type</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for consultation in recent_consultations %}
+                            <tr onclick="window.location='{% url 'admin_interface:consultation_detail' consultation.id %}'">
+                                <td>{{ consultation.start_time|date:"d/m/Y H:i" }}</td>
+                                <td>{{ consultation.patient.get_full_name }}</td>
+                                <td>{{ consultation.medecin.get_full_name }}</td>
+                                <td>{{ consultation.get_type_display }}</td>
+                                <td>
+                                    {% if consultation.end_time %}
+                                    <span class="badge badge-completed">Terminée</span>
+                                    {% else %}
+                                    <span class="badge badge-pending">En cours</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-0">Aucune consultation récente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Préparer les données pour le graphique de statistiques mensuelles
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('monthlyStatsChart').getContext('2d');
+        
+        // Données JSON passées depuis la vue
+        const monthlyData = {{ monthly_stats|safe }};
+        
+        // Préparer les labels et données
+        const labels = monthlyData.map(item => {
+            const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+            return `${monthNames[item.month-1]} ${item.year}`;
+        });
+        
+        const data = monthlyData.map(item => item.count);
+        
+        // Créer le graphique
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Consultations',
+                    data: data,
+                    borderColor: '#e63946',
+                    backgroundColor: 'rgba(230, 57, 70, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Évolution des consultations'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}    

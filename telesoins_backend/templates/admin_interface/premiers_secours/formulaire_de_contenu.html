@@ -1,0 +1,121 @@
+{% extends 'admin_interface/base.html' %}
+
+{% block title %}{{ title }} - TéléSoins+ Administration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ title }}</h1>
+    <a href="{% url 'admin_interface:first_aid_module_detail' module.id %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i> Retour au module
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">Titre</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div class="text-danger">
+                    {% for error in form.title.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.content_type.id_for_label }}" class="form-label">Type de contenu</label>
+                {{ form.content_type }}
+                {% if form.content_type.errors %}
+                <div class="text-danger">
+                    {% for error in form.content_type.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3 content-field text-content">
+                <label for="{{ form.content.id_for_label }}" class="form-label">Contenu</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                <div class="text-danger">
+                    {% for error in form.content.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <small class="form-text text-muted">Utilisez ce champ pour le contenu texte ou checklist.</small>
+            </div>
+            
+            <div class="mb-3 content-field file-content">
+                <label for="{{ form.file.id_for_label }}" class="form-label">Fichier</label>
+                {{ form.file }}
+                {% if form.file.errors %}
+                <div class="text-danger">
+                    {% for error in form.file.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <small class="form-text text-muted">Utilisez ce champ pour télécharger des vidéos, images ou fichiers audio.</small>
+                {% if content and content.file %}
+                <div class="mt-2">
+                    <p>Fichier actuel: <a href="{{ content.file.url }}" target="_blank">{{ content.file.name }}</a></p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.order.id_for_label }}" class="form-label">Ordre d'affichage</label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                <div class="text-danger">
+                    {% for error in form.order.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'admin_interface:first_aid_module_detail' module.id %}" class="btn btn-outline-secondary me-2">Annuler</a>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Script pour afficher/masquer les champs en fonction du type de contenu
+    $(document).ready(function() {
+        // Fonction pour mettre à jour l'affichage des champs
+        function updateContentFields() {
+            const contentType = $('#{{ form.content_type.id_for_label }}').val();
+            
+            if (contentType === 'text' || contentType === 'checklist') {
+                $('.content-field.text-content').show();
+                $('.content-field.file-content').hide();
+            } else if (contentType === 'video' || contentType === 'image' || contentType === 'audio') {
+                $('.content-field.text-content').hide();
+                $('.content-field.file-content').show();
+            } else {
+                // Par défaut, afficher les deux
+                $('.content-field').show();
+            }
+        }
+        
+        // Initialiser l'affichage au chargement
+        updateContentFields();
+        
+        // Mettre à jour l'affichage à chaque changement de type
+        $('#{{ form.content_type.id_for_label }}').change(updateContentFields);
+    });
+</script>
+{% endblock %}

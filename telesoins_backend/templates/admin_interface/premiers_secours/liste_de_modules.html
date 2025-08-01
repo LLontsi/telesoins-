@@ -1,0 +1,102 @@
+{% extends 'admin_interface/base.html' %}
+
+{% block title %}Modules de premiers secours - TéléSoins+ Administration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Modules de premiers secours</h1>
+    <a href="{% url 'admin_interface:first_aid_module_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i> Créer un module
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-8">
+                <form method="get" class="d-flex">
+                    <div class="input-group me-2">
+                        <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search|default:'' }}">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <select name="category" class="form-select me-2" onchange="this.form.submit()">
+                        <option value="">Toutes les catégories</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select name="difficulty" class="form-select me-2" onchange="this.form.submit()">
+                        <option value="">Tous les niveaux</option>
+                        <option value="1" {% if selected_difficulty == '1' %}selected{% endif %}>Débutant</option>
+                        <option value="2" {% if selected_difficulty == '2' %}selected{% endif %}>Intermédiaire</option>
+                        <option value="3" {% if selected_difficulty == '3' %}selected{% endif %}>Avancé</option>
+                    </select>
+                    
+                    <select name="published" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tous les statuts</option>
+                        <option value="yes" {% if selected_published == 'yes' %}selected{% endif %}>Publié</option>
+                        <option value="no" {% if selected_published == 'no' %}selected{% endif %}>Non publié</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Catégorie</th>
+                        <th>Difficulté</th>
+                        <th>Contenus</th>
+                        <th>Publié</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for module in modules %}
+                    <tr>
+                        <td>{{ module.title }}</td>
+                        <td>{{ module.category }}</td>
+                        <td>
+                            {% if module.difficulty_level == 1 %}
+                                <span class="badge bg-success">Débutant</span>
+                            {% elif module.difficulty_level == 2 %}
+                                <span class="badge bg-warning text-dark">Intermédiaire</span>
+                            {% else %}
+                                <span class="badge bg-danger">Avancé</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ module.contents.count }}</td>
+                        <td>
+                            {% if module.is_published %}
+                                <span class="badge bg-success">Publié</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Non publié</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_interface:first_aid_module_detail' module.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_interface:first_aid_module_edit' module.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center p-3">Aucun module trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

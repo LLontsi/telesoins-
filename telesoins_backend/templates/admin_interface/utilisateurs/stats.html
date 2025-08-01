@@ -1,0 +1,200 @@
+{% extends 'admin_interface/base.html' %}
+
+{% block title %}Statistiques - TéléSoins+ Administration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Statistiques</h1>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Utilisateurs</h5>
+                <p class="card-text display-4">{{ total_users }}</p>
+                <div class="small text-muted">
+                    <span class="text-success">+{{ monthly_registrations }}</span> ce mois-ci
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Patients</h5>
+                <p class="card-text display-4">{{ patients_count }}</p>
+                <div class="small text-muted">
+                    {% if patients_count > 0 %}
+                    {{ total_appointments|floatformat:1 }} rendez-vous/patient
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Médecins</h5>
+                <p class="card-text display-4">{{ medecins_count }}</p>
+                <div class="small text-muted">
+                    {% if medecins_count > 0 %}
+                    {{ total_consultations|floatformat:1 }} consultations/médecin
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title">Rendez-vous</h5>
+                <p class="card-text display-4">{{ total_appointments }}</p>
+                <div class="small text-muted">
+                    <span class="text-success">+{{ monthly_appointments }}</span> ce mois-ci
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Types de consultations</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="consultationTypesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Taux de complétion</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">Rendez-vous complétés</h6>
+                    </div>
+                    <div class="flex-shrink-0">
+                        {% if total_appointments > 0 %}
+                        {{ completed_appointments|floatformat:1 }}%
+                        {% else %}
+                        0%
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="progress mb-4">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {% if total_appointments > 0 %}{{ completed_appointments|floatformat:1 }}{% else %}0{% endif %}%"></div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">Quiz réussis</h6>
+                    </div>
+                    <div class="flex-shrink-0">
+                        {% for stat in quiz_stats %}
+                            {% if forloop.first %}
+                                {{ stat.avg_score|floatformat:1 }}%
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {% for stat in quiz_stats %}{% if forloop.first %}{{ stat.avg_score|floatformat:1 }}{% endif %}{% empty %}0{% endfor %}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Statistiques modules premiers secours</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th class="text-center">Quiz terminés</th>
+                                <th class="text-center">Score moyen</th>
+                                <th class="text-right">Taux de réussite</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in quiz_stats %}
+                            <tr>
+                                <td>{{ stat.quiz__module__title }}</td>
+                                <td class="text-center">{{ stat.total }}</td>
+                                <td class="text-center">{{ stat.avg_score|floatformat:1 }}%</td>
+                                <td class="text-right">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ stat.avg_score|floatformat:1 }}%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center p-3">Aucune statistique disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Graphique pour les types de consultations
+        const ctxTypes = document.getElementById('consultationTypesChart').getContext('2d');
+        
+        // Préparer les données
+        const typesData = [];
+        const typesLabels = [];
+        const typesColors = ['#e63946', '#457b9d', '#1d3557', '#2a9d8f'];
+        
+        {% for type in consultation_types %}
+        typesLabels.push('{{ type.get_type_display }}');
+        typesData.push({{ type.count }});
+        {% endfor %}
+        
+        new Chart(ctxTypes, {
+            type: 'doughnut',
+            data: {
+                labels: typesLabels,
+                datasets: [{
+                    data: typesData,
+                    backgroundColor: typesColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Répartition des types de consultations'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "321088026758",
+    "project_id": "telesoins-plus",
+    "storage_bucket": "telesoins-plus.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321088026758:android:ecbae376c2f79aeb897907",
+        "android_client_info": {
+          "package_name": "com.telesoinsplus.telesoins_plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEfPGYNQNd6LViPJqIodqhxyEFd1LcMr8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
